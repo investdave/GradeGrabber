@@ -3,6 +3,7 @@ from BeautifulSoup import BeautifulSoup
 from requests import Request, Session
 import getpass
 import numpy as np
+import matplotlib.pyplot as plt
 
 GRADE_STRUCTURE = {'A+' : 4.3, 'A'  : 4, 'A-' : 3.7,
                    'B+' : 3.3, 'B': 3, 'B-' : 2.7,
@@ -10,13 +11,14 @@ GRADE_STRUCTURE = {'A+' : 4.3, 'A'  : 4, 'A-' : 3.7,
                    'D+' : 1.3, 'D' : 1.0, 'D-'  : 0.7,
                    'F': 0}
 
-
-
-
+GRADE_STRUCTURE_LIST = ['A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-',
+                        'D+', 'D', 'D-', 'F']
 
 def scrapper():
+    title = ""
     grades = list()
     nGrades = list()
+
 
     payoff = dict()
     loginURL = "https://my.concordia.ca/psp/upprpr9/?cmd=login&languageCd=ENG"
@@ -40,17 +42,22 @@ def scrapper():
     prepare_get = session.prepare_request(get_request)
     get_response = session.send(prepare_get)
 
-    #post_request = Request('POST', registerURL, data=
-
     soup = BeautifulSoup(get_response.text)
 
-    for tr in soup.findAll('tr'):
+    for tr in soup.findAll('tr')[2:]:
+        gradeDistArray = list()
         tds = tr.findAll('td')
-        print tds[0].text , tds[1].text
-        if tds[1].text in GRADE_STRUCTURE:
-            grades.append(GRADE_STRUCTURE[tds[1].text])
-    
-        nGrades = np.array(grades)
+        print "{} {}".format(tds[0].text , tds[1].text)
+        title = tds[0].text
+        yourGrade = convert_to_GPA(tds[1].text)
+        grades.append(convert_to_GPA(str(tds[1].text)))
+        for gradeDistValue in tr.findAll('td', attrs={'class':'cusistabledata'})[2:]:
+                gradeDistArray.append(int(gradeDistValue.text))
+        print GRADE_STRUCTURE_LIST
+        print gradeDistArray
+        if (title != None) and (gradeDistArray != None) and (yourGrade != None):
+            graphs(title, gradeDistArray, yourGrade)
+    nGrades = np.array(removing_none(grades))
     print "Average this year: {}".format(nGrades.mean())
 
 def calculator(*args):
@@ -60,12 +67,31 @@ def calculator(*args):
     for i in args:
         classGrades = i.split(',')
     for z in classGrades:
-        newClassGrades.append(GRADE_STRUCTURE[z])
-    nClassGrades = np.array(newClassGrades)
+        newClassGrades.append(convert_to_GPA(z))
+    nClassGrades = np.array(removing_none(newClassGrades))
     print nClassGrades
     mu = nClassGrades.mean()
     print "Average Gpa: {0:.2f}".format(mu)
 
+def graphs(title, gradeDistArray, yourGrade):
+    x = np.array([1,2,3,4,5,6,7,8,9,10,11,12,13])
+    plt.xkcd()
+    plt.title(title)
+    plt.xlabel("Grade Distribution")
+    plt.ylabel("Frequency")
+    plt.xticks(x, GRADE_STRUCTURE_LIST)
+    plt.plot(x, gradeDistArray)
+    plt.show()
+    
+
+def convert_to_GPA(letter):
+    if letter in GRADE_STRUCTURE:
+        if (GRADE_STRUCTURE[letter] != None):
+            return GRADE_STRUCTURE[letter]
+
+def removing_none(List):
+    return filter(lambda x: x is not None, List)
+        
 choice = raw_input("(G)rade Scrapper, Grade (C)alculator: ")
 
 if (choice == "G"):
