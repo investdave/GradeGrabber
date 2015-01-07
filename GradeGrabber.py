@@ -1,4 +1,3 @@
-
 from BeautifulSoup import BeautifulSoup
 from requests import Request, Session
 import getpass
@@ -49,13 +48,12 @@ def scrapper():
         tds = tr.findAll('td')
         print "{} {}".format(tds[0].text , tds[1].text)
         title = tds[0].text
-        yourGrade = convert_to_GPA(tds[1].text)
+        yourGrade = tds[1].text
         grades.append(convert_to_GPA(str(tds[1].text)))
         for gradeDistValue in tr.findAll('td', attrs={'class':'cusistabledata'})[2:]:
                 gradeDistArray.append(int(gradeDistValue.text))
-        print GRADE_STRUCTURE_LIST
-        print gradeDistArray
-        if (title != None) and (gradeDistArray != None) and (yourGrade != None):
+        if (title != None) and (gradeDistArray) and (yourGrade != None):
+            print gradeDistArray
             graphs(title, gradeDistArray, yourGrade)
     nGrades = np.array(removing_none(grades))
     print "Average this year: {}".format(nGrades.mean())
@@ -75,11 +73,23 @@ def calculator(*args):
 
 def graphs(title, gradeDistArray, yourGrade):
     x = np.array([1,2,3,4,5,6,7,8,9,10,11,12,13])
+    otherX = [1,2,3,4,5,6,7,8,9,10,11,12,
+    nGradeDistArray = np.array(gradeDistArray)
     plt.xkcd()
     plt.title(title)
     plt.xlabel("Grade Distribution")
     plt.ylabel("Frequency")
     plt.xticks(x, GRADE_STRUCTURE_LIST)
+    yourGradePos = [i for i,s in enumerate(GRADE_STRUCTURE_LIST) if s==yourGrade]
+    for z in yourGradePos:
+        yourGradeX = otherX[z]
+        yourGradeY = gradeDistArray[z]
+        plt.annotate('You', xy=(yourGradeX,yourGradeY), xytext=(yourGradeX+1,yourGradeY+1),
+                arrowprops=dict(facecolor='black', shrink=0.05))
+
+    mu = nGradeDistArray.mean()
+    median = np.median(nGradeDistArray)
+    plt.text(8, max(gradeDistArray)-1, 'Average of the class is:{0:.2f} \nMedian of the class is: {1:.2f}'.format(mu,median))
     plt.plot(x, gradeDistArray)
     plt.show()
     
@@ -93,6 +103,7 @@ def removing_none(List):
     return filter(lambda x: x is not None, List)
         
 choice = raw_input("(G)rade Scrapper, Grade (C)alculator: ")
+choice = choice.upper()
 
 if (choice == "G"):
     scrapper()
