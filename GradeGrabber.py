@@ -13,6 +13,8 @@ GRADE_STRUCTURE = {'A+' : 4.3, 'A'  : 4, 'A-' : 3.7,
 GRADE_STRUCTURE_LIST = ['A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-',
                         'D+', 'D', 'D-', 'F']
 
+GRADES_INT = [4.3,4,3.7,3.3,3,2.7,2.3,2.0,1.7,1.3,1.0,0.7,0]
+
 def scrapper():
     title = ""
     grades = list()
@@ -53,7 +55,6 @@ def scrapper():
         for gradeDistValue in tr.findAll('td', attrs={'class':'cusistabledata'})[2:]:
                 gradeDistArray.append(int(gradeDistValue.text))
         if (title != None) and (gradeDistArray) and (yourGrade != None):
-            print gradeDistArray
             graphs(title, gradeDistArray, yourGrade)
     nGrades = np.array(removing_none(grades))
     print "Average this year: {}".format(nGrades.mean())
@@ -73,8 +74,17 @@ def calculator(*args):
 
 def graphs(title, gradeDistArray, yourGrade):
     x = np.array([1,2,3,4,5,6,7,8,9,10,11,12,13])
-    otherX = [1,2,3,4,5,6,7,8,9,10,11,12,
-    nGradeDistArray = np.array(gradeDistArray)
+    otherX = [1,2,3,4,5,6,7,8,9,10,11,12]
+    splitUp = list()
+    nGradeDistArray = list()
+
+    for i in range(0,12):
+        z = 0
+        while z != gradeDistArray[i]:
+            nGradeDistArray.append(GRADES_INT[i])
+            z = z + 1
+    nGradeDistArray = np.array(nGradeDistArray)
+    
     plt.xkcd()
     plt.title(title)
     plt.xlabel("Grade Distribution")
@@ -84,12 +94,14 @@ def graphs(title, gradeDistArray, yourGrade):
     for z in yourGradePos:
         yourGradeX = otherX[z]
         yourGradeY = gradeDistArray[z]
-        plt.annotate('You', xy=(yourGradeX,yourGradeY), xytext=(yourGradeX+1,yourGradeY+1),
-                arrowprops=dict(facecolor='black', shrink=0.05))
+    plt.annotate('You', xy=(yourGradeX,yourGradeY), xytext=(yourGradeX+1,yourGradeY+1),
+                 arrowprops=dict(facecolor='black', shrink=0.05))
 
     mu = nGradeDistArray.mean()
     median = np.median(nGradeDistArray)
-    plt.text(8, max(gradeDistArray)-1, 'Average of the class is:{0:.2f} \nMedian of the class is: {1:.2f}'.format(mu,median))
+    
+    plt.text(8, max(gradeDistArray)*0.85, 'Average of the class is:{0:.2f} \nMedian of the class is: {1:.2f} \nYour Grade: {2} | {3} '.format(mu, median, yourGrade,
+                                                                                                                                          convert_to_GPA(yourGrade)))
     plt.plot(x, gradeDistArray)
     plt.show()
     
