@@ -3,6 +3,9 @@ from requests import Request, Session
 import getpass
 import numpy as np
 import matplotlib.pyplot as plt
+import time
+
+#To-Do: Please clean up code, please stop repeating Login Process (just make one function for that).
 
 GRADE_STRUCTURE = {'A+' : 4.3, 'A'  : 4, 'A-' : 3.7,
                    'B+' : 3.3, 'B': 3, 'B-' : 2.7,
@@ -104,7 +107,47 @@ def graphs(title, gradeDistArray, yourGrade):
                                                                                                                                           convert_to_GPA(yourGrade)))
     plt.plot(x, gradeDistArray)
     plt.show()
-    
+
+def waiting_list():
+    #loops every 2 minutes
+    payoff = dict()
+    registerpayoff = dict()
+    loginURL = "https://my.concordia.ca/psp/upprpr9/?cmd=login&languageCd=ENG"
+    registerURL = "https://my.concordia.ca/psp/upprpr9/EMPLOYEE/EMPL/s/wr200.asp"
+    registerURLtest = "https://my.concordia.ca/psp/upprpr9/EMPLOYEE/EMPL/s/WEBLIB_CONCORD.CU_SIS_INFO.FieldFormula.IScript_WebReg1?PORTALPARAM_PTCNAV=CU_WEBREG1&EOPP.SCNode=EMPL&EOPP.SCPortal=EMPLOYEE&EOPP.SCName=CU_REGISTRATION&EOPP.SCLabel=Registration&EOPP.SCPTfname=CU_REGISTRATION&FolderPath=PORTAL_ROOT_OBJECT.CU_REGISTRATION.CU_WEBREG1&IsFolder=false"
+    session = Session()
+
+
+    print("-Login Credentials-")
+    print("\n")
+    userid = raw_input("Username:")
+    pwd = getpass.getpass("Password:")
+    payoff["userid"] = userid
+    payoff["pwd"] = pwd
+    coursename = raw_input("What is the course name: ")
+    coursenum = raw_input("What is the course number: ")
+    registerpayoff["InputCourName"] = coursename
+    registerpayoff["InputCourNum"] = coursenum
+    #registerpayoff["selectoption"] = "S"
+    #registerpayoff["Id"] = "28E0649bea4cd2e438fAE60bcBCae84e163"
+    #registerpayoff["language"] = 1
+    while True:
+        post_request = Request('POST', loginURL, data=payoff)
+        prepare_post = session.prepare_request(post_request)
+        post_response = session.send(prepare_post)
+
+        post_request = Request('POST', registerURLtest, data=registerpayoff)
+        prepare_post = session.prepare_request(post_request)
+        post_response = session.send(prepare_post)
+
+        soup = BeautifulSoup(post_response.text)
+
+        print soup
+        time.sleep(60)
+
+
+
+        #if state == True: sys.exit()
 
 def convert_to_GPA(letter):
     if letter in GRADE_STRUCTURE:
@@ -114,7 +157,7 @@ def convert_to_GPA(letter):
 def removing_none(List):
     return filter(lambda x: x is not None, List)
         
-choice = raw_input("(G)rade Scrapper, Grade (C)alculator: ")
+choice = raw_input("(G)rade Scrapper, Grade (C)alculator, (W)aiting List: ")
 choice = choice.upper()
 
 if (choice == "G"):
@@ -122,4 +165,6 @@ if (choice == "G"):
 elif (choice == "C"):
     grades = raw_input("Grade List: ")
     calculator(grades)
+elif (choice == "W"):
+    waiting_list()
     
